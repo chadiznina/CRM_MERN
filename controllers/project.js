@@ -1,4 +1,5 @@
 const Project = require('../models/Project');
+const Task = require('../models/Task');
 
 const createProject = async (req, res) => {
     const { title, estimatedTime, description } = req.body;
@@ -39,6 +40,26 @@ const getProjects = async (req, res) => {
 
 const getProject = async (req, res) => {
     let project = await Project.findById(req.params.id);
+
+    if(!project) {
+        return res.status(400).json({
+            msg: "Project not found"
+        });
+    }
+
+    const tasks = await Task.find({ projectId: req.params.id });
+    for (let i = 0; i < tasks.length; i++) {
+        tasks[i] = tasks[i].toObject();
+        tasks[i].assignee = await User.findById(tasks[i].assignee);
+
+        if(tasks[i].assignee) {
+            tasks[i].assignee = tasks[i].assignee.toObject();
+        }
+    }
+
+    project = project.toObject();
+
+    project.tasks = tasks;
     return res.status(200).json({ project });
 }
 
@@ -72,6 +93,10 @@ const deleteProject = async (req, res) => {
         });
     } else {
         await Project.findByIdAndDelete(req.params.id);
+        const tasks = await Task.find({ projectId: req.params.id });
+        for (let i = 0; i < tasks.length; i++) {
+            await Task.findByIdAndDelete(tasks[i]._id);
+        }
         return res.status(200).json({ msg: "Project deleted" });
     }
 }
