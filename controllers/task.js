@@ -48,7 +48,7 @@ const updateTask = async (req, res) => {
         });
     }
 
-    const project = await Project.findById(req.params.projectId);
+    const project = await Project.findById(req.body.projectId);
     if (!project) {
         return res.status(400).json({
             msg: "Project not found"
