@@ -37,7 +37,15 @@ const createProject = async (req, res) => {
 const getProjects = async (req, res) => {
   let projects = await Project.find({});
     if(req.user.role !== 'admin') {
-        projects = projects.filter(project => project.tasks.some(task => task.assignee === req.user.id));
+        projects = projects.filter(async project => {
+            let tasks = await Task.find({projectId: project._id});
+            tasks = tasks.some(task => task.assignee === req.user.id);
+            if(tasks.length > 0) {
+                return project;
+            } else {
+                return null;
+            }
+        });
     }
   return res.status(200).json({ projects });
 };
