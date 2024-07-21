@@ -35,18 +35,15 @@ const createProject = async (req, res) => {
 };
 
 const getProjects = async (req, res) => {
-  let projects = await Project.find({});
-    if(req.user.role !== 'admin') {
-        projects = projects.filter(async project => {
-            let tasks = await Task.find({projectId: project._id});
-            tasks = tasks.some(task => task.assignee === req.user.id);
-            if(tasks.length > 0) {
-                return project;
-            } else {
-                return null;
-            }
-        });
-    }
+  let projects;
+  if (req.user.role === "admin") {
+    projects = await Project.find({});
+  } else {
+    const tasks = await Task.find({ assignee: req.user.id });
+    const projectIds = tasks.map((task) => task.projectId);
+    projects = await Project.find({ _id: { $in: projectIds } });
+  }
+
   return res.status(200).json({ projects });
 };
 
@@ -60,9 +57,10 @@ const getProject = async (req, res) => {
   }
 
   let tasks = await Task.find({ projectId: req.params.id });
-  if(req.user.role !== 'admin') {
-    tasks = tasks.filter(task => task.assignee === req.user.id);
+  if (req.user.role !== "admin") {
+    tasks = tasks.filter((task) => task.assignee.equals(req.user.id));
   }
+
   for (let i = 0; i < tasks.length; i++) {
     tasks[i] = tasks[i].toObject();
     tasks[i].assignee = await User.findById(tasks[i].assignee);
@@ -101,7 +99,7 @@ const deleteProject = async (req, res) => {
       msg: "Project not found",
     });
   }
-  if (!req.user.role === "admin") {
+  if (req.user.role !== "admin") {
     return res.status(400).json({
       msg: "You are not authorized to delete project",
     });
@@ -111,19 +109,7 @@ const deleteProject = async (req, res) => {
     for (let i = 0; i < tasks.length; i++) {
       await Task.findByIdAndDelete(tasks[i]._id);
     }
-
-    if (!req.user.role === "admin") {
-      return res.status(400).json({
-        msg: "You are not authorized to delete project",
-      });
-    } else {
-      await Project.findByIdAndDelete(req.params.id);
-      const tasks = await Task.find({ projectId: req.params.id });
-      for (let i = 0; i < tasks.length; i++) {
-        await Task.findByIdAndDelete(tasks[i]._id);
-      }
-      return res.status(200).json({ msg: "Project deleted" });
-    }
+    return res.status(200).json({ msg: "Project deleted" });
   }
 };
 module.exports = {

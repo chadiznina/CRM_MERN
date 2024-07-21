@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Menu, message, Button, Modal, Form, Input, Select, Space, Popconfirm, Table } from 'antd';
+import { Layout, Menu, Button, Modal, Form, Input, Select, Space, Popconfirm, Table } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -12,6 +12,7 @@ const { Option } = Select;
 const ProjectDetails = () => {
   const { id } = useParams();
   const [token, setToken] = useState(JSON.parse(localStorage.getItem("auth")) || "");
+  const [user, setUser] = useState(null);  // Define user state
   const [project, setProject] = useState(null);
   const [users, setUsers] = useState([]);
   const [visible, setVisible] = useState(false);
@@ -19,6 +20,26 @@ const ProjectDetails = () => {
   const [loading, setLoading] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const axiosConfig = {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      };
+      try {
+        const response = await axios.get("http://localhost:3000/api/v1/getCurrentUser", axiosConfig);
+        setUser(response.data.user);
+      } catch (error) {
+        toast.error(error.message);
+      }
+    };
+
+    if (token) {
+      fetchUserData();
+    }
+  }, [token]);
 
   const fetchProjectDetails = async () => {
     const axiosConfig = {
@@ -103,11 +124,13 @@ const ProjectDetails = () => {
       }
     };
 
-    // Log the data being sent to the server
-    console.log("Editing Task with data:", values);
+    const taskData = {
+      ...values,
+      projectId: id
+    };
 
     try {
-      await axios.put(`http://localhost:3000/api/v1/projects/${id}/tasks/task/${selectedTask._id}`, values, axiosConfig);
+      await axios.put(`http://localhost:3000/api/v1/projects/${id}/tasks/task/${selectedTask._id}`, taskData, axiosConfig);
       toast.success('Task updated successfully');
       fetchProjectDetails(); // Refresh the project details to get the updated task list
       setEditTaskVisible(false);
@@ -121,7 +144,12 @@ const ProjectDetails = () => {
   const handleDeleteTask = async (taskId) => {
     const axiosConfig = {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        title: selectedTask?.title, // assuming you want to send the title and projectId in the delete request body
+        projectId: id
       }
     };
 
@@ -149,17 +177,83 @@ const ProjectDetails = () => {
       key: 'actions',
       render: (text, record) => (
         <Space size="middle">
-          <Button icon={<EditOutlined />} onClick={() => {
-            setSelectedTask(record);
-            setEditTaskVisible(true);
-          }}>Edit</Button>
-          <Popconfirm title="Are you sure to delete this task?" onConfirm={() => handleDeleteTask(record._id)}>
-            <Button icon={<DeleteOutlined />} danger>Delete</Button>
-          </Popconfirm>
+          {user?.role === 'admin' ? (
+            <>
+              <Button icon={<EditOutlined />} onClick={() => {
+                setSelectedTask(record);
+                setEditTaskVisible(true);
+              }}>Edit</Button>
+              <Popconfirm title="Are you sure to delete this task?" onConfirm={() => handleDeleteTask(record._id)}>
+                <Button icon={<DeleteOutlined />} danger>Delete</Button>
+              </Popconfirm>
+            </>
+          ) : (
+            <Button icon={<EditOutlined />} onClick={() => {
+              setSelectedTask(record);
+              setEditTaskVisible(true);
+            }}>Edit</Button>
+          )}
         </Space>
       )
     }
   ];
+
+  const renderEditTaskForm = () => {
+    const commonFormItems = (
+      <>
+        <Form.Item
+          name="title"
+          label="Task Title"
+          rules={[{ required: true, message: 'Please input the task title!' }]}
+        >
+          <Input disabled={user?.role !== 'admin'} />
+        </Form.Item>
+        <Form.Item
+          name="description"
+          label="Description"
+          rules={[{ required: true, message: 'Please input the task description!' }]}
+        >
+          <Input.TextArea disabled={user?.role !== 'admin'} />
+        </Form.Item>
+      </>
+    );
+
+    const adminSpecificFormItems = (
+      <Form.Item
+        name="assignee"
+        label="Assignee"
+        rules={[{ required: true, message: 'Please select an assignee!' }]}
+      >
+        <Select disabled={user?.role !== 'admin'}>
+          {users.map(user => (
+            <Option key={user._id} value={user._id}>{user.name}</Option>
+          ))}
+        </Select>
+      </Form.Item>
+    );
+
+    const nonAdminSpecificFormItems = (
+      <Form.Item
+        name="estimatedTime"
+        label="Estimated Time"
+        rules={[{ required: true, message: 'Please input the estimated time!' }]}
+      >
+        <Input />
+      </Form.Item>
+    );
+
+    return (
+      <Form layout="vertical" onFinish={handleEditTask} initialValues={selectedTask}>
+        {commonFormItems}
+        {user?.role === 'admin' ? adminSpecificFormItems : nonAdminSpecificFormItems}
+        <Form.Item>
+          <Button type="primary" htmlType="submit" loading={loading}>
+            Update
+          </Button>
+        </Form.Item>
+      </Form>
+    );
+  };
 
   return (
     <Layout className='layout'>
@@ -206,9 +300,11 @@ const ProjectDetails = () => {
                 <p>{project.description}</p>
                 <h2>Estimated Time</h2>
                 <p>{project.estimatedTime}</p>
-                <Button type="primary" onClick={showModal} icon={<PlusOutlined />}>
-                  Add Task
-                </Button>
+                {user?.role === 'admin' && (
+                  <Button type="primary" onClick={showModal} icon={<PlusOutlined />}>
+                    Add Task
+                  </Button>
+                )}
                 <Table columns={taskColumns} dataSource={project.tasks} rowKey="_id" style={{ marginTop: 20 }} />
               </div>
             )}
@@ -264,47 +360,7 @@ const ProjectDetails = () => {
               onCancel={handleCancel}
               footer={null}
             >
-              {selectedTask && (
-                <Form layout="vertical" onFinish={handleEditTask} initialValues={selectedTask}>
-                  <Form.Item
-                    name="title"
-                    label="Task Title"
-                    rules={[{ required: true, message: 'Please input the task title!' }]}
-                  >
-                    <Input />
-                  </Form.Item>
-                  <Form.Item
-                    name="description"
-                    label="Description"
-                    rules={[{ required: true, message: 'Please input the task description!' }]}
-                  >
-                    <Input.TextArea />
-                  </Form.Item>
-                  <Form.Item
-                    name="estimatedTime"
-                    label="Estimated Time"
-                    rules={[{ required: true, message: 'Please input the estimated time!' }]}
-                  >
-                    <Input />
-                  </Form.Item>
-                  <Form.Item
-                    name="assignee"
-                    label="Assignee"
-                    rules={[{ required: true, message: 'Please select an assignee!' }]}
-                  >
-                    <Select>
-                      {users.map(user => (
-                        <Option key={user._id} value={user._id}>{user.name}</Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                  <Form.Item>
-                    <Button type="primary" htmlType="submit" loading={loading}>
-                      Update
-                    </Button>
-                  </Form.Item>
-                </Form>
-              )}
+              {selectedTask && renderEditTaskForm()}
             </Modal>
           </Content>
         </Layout>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Menu, message, Table, Button, Modal, Form, Input, Space, Popconfirm } from 'antd';
+import { Layout, Menu, Button, Modal, Form, Input, Space, Popconfirm, Table } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
@@ -10,12 +10,32 @@ const { Header, Sider, Content } = Layout;
 
 const Dashboard = () => {
   const [token, setToken] = useState(JSON.parse(localStorage.getItem("auth")) || "");
+  const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [visible, setVisible] = useState(false);
-  const [editVisible, setEditVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const axiosConfig = {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      };
+      try {
+        const response = await axios.get("http://localhost:3000/api/v1/getCurrentUser", axiosConfig);
+        setUser(response.data.user);
+      } catch (error) {
+        toast.error(error.message);
+      }
+    };
+
+    if (token) {
+      fetchUserData();
+    }
+  }, [token]);
 
   const fetchProjects = async () => {
     const axiosConfig = {
@@ -51,10 +71,14 @@ const Dashboard = () => {
       render: (text, record) => (
         <Space size="middle">
           <Button icon={<EyeOutlined />} onClick={() => navigate(`/project/${record._id}`)}>View</Button>
-          <Button icon={<EditOutlined />} onClick={() => handleEditProject(record)}>Edit</Button>
-          <Popconfirm title="Are you sure to delete this project?" onConfirm={() => handleDeleteProject(record._id)}>
-            <Button icon={<DeleteOutlined />} danger>Delete</Button>
-          </Popconfirm>
+          {user?.role === 'admin' && (
+            <>
+              <Button icon={<EditOutlined />} onClick={() => handleEditProject(record)}>Edit</Button>
+              <Popconfirm title="Are you sure to delete this project?" onConfirm={() => handleDeleteProject(record._id)}>
+                <Button icon={<DeleteOutlined />} danger>Delete</Button>
+              </Popconfirm>
+            </>
+          )}
         </Space>
       )
     }
@@ -66,7 +90,6 @@ const Dashboard = () => {
 
   const handleCancel = () => {
     setVisible(false);
-    setEditVisible(false);
     setSelectedProject(null);
   };
 
@@ -90,6 +113,11 @@ const Dashboard = () => {
     }
   };
 
+  const handleEditProject = (project) => {
+    setSelectedProject(project);
+    setVisible(true);
+  };
+
   const handleEdit = async (values) => {
     setLoading(true);
     const axiosConfig = {
@@ -102,7 +130,7 @@ const Dashboard = () => {
       await axios.put(`http://localhost:3000/api/v1/projects/${selectedProject._id}`, values, axiosConfig);
       toast.success('Project updated successfully');
       fetchProjects(); // Refresh the project list
-      setEditVisible(false);
+      setVisible(false);
     } catch (error) {
       toast.error(error.response.data.msg);
     } finally {
@@ -126,11 +154,6 @@ const Dashboard = () => {
     }
   };
 
-  const handleEditProject = (project) => {
-    setSelectedProject(project);
-    setEditVisible(true);
-  };
-
   const handleLogout = () => {
     localStorage.removeItem("auth");
     setToken("");
@@ -145,6 +168,9 @@ const Dashboard = () => {
         <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['1']} style={{ flex: 1 }}>
           <Menu.Item key="1">Dashboard</Menu.Item>
         </Menu>
+        <span style={{ color: 'white', marginRight: '20px' }}>
+          {user && `${user.name} (${user.role === 'admin' ? 'Admin' : 'User'})`}
+        </span>
         <Button className="logout-button" onClick={handleLogout}>Logout</Button>
       </Header>
       <Layout>
@@ -168,18 +194,20 @@ const Dashboard = () => {
           >
             <div className="content-header">
               <h1>Dashboard</h1>
-              <Button className="add-button" type="primary" onClick={showModal}>
-                + Add Project
-              </Button>
+              {user?.role === 'admin' && (
+                <Button className="add-button" type="primary" onClick={showModal}>
+                  + Add Project
+                </Button>
+              )}
             </div>
             <Table columns={columns} dataSource={projects} rowKey="_id" />
             <Modal
               visible={visible}
-              title="Create a new project"
+              title={selectedProject ? "Edit project" : "Create a new project"}
               onCancel={handleCancel}
               footer={null}
             >
-              <Form layout="vertical" onFinish={handleCreate}>
+              <Form layout="vertical" onFinish={selectedProject ? handleEdit : handleCreate} initialValues={selectedProject}>
                 <Form.Item
                   name="title"
                   label="Project Title"
@@ -203,47 +231,10 @@ const Dashboard = () => {
                 </Form.Item>
                 <Form.Item>
                   <Button type="primary" htmlType="submit" loading={loading}>
-                    Create
+                    {selectedProject ? "Update" : "Create"}
                   </Button>
                 </Form.Item>
               </Form>
-            </Modal>
-            <Modal
-              visible={editVisible}
-              title="Edit project"
-              onCancel={handleCancel}
-              footer={null}
-            >
-              {selectedProject && (
-                <Form layout="vertical" onFinish={handleEdit} initialValues={selectedProject}>
-                  <Form.Item
-                    name="title"
-                    label="Project Title"
-                    rules={[{ required: true, message: 'Please input the project title!' }]}
-                  >
-                    <Input />
-                  </Form.Item>
-                  <Form.Item
-                    name="description"
-                    label="Description"
-                    rules={[{ required: true, message: 'Please input the project description!' }]}
-                  >
-                    <Input.TextArea />
-                  </Form.Item>
-                  <Form.Item
-                    name="estimatedTime"
-                    label="Estimated Time"
-                    rules={[{ required: true, message: 'Please input the estimated time!' }]}
-                  >
-                    <Input />
-                  </Form.Item>
-                  <Form.Item>
-                    <Button type="primary" htmlType="submit" loading={loading}>
-                      Update
-                    </Button>
-                  </Form.Item>
-                </Form>
-              )}
             </Modal>
           </Content>
         </Layout>
