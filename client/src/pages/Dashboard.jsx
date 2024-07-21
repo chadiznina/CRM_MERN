@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Layout, Menu, message, Table, Button, Modal, Form, Input } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
-import { projects as mockedProjects } from '../../mockData';
+import { toast } from 'react-toastify';
 import axios from 'axios';
 import "../styles/Dashboard.css";
 
-const { Header, Content, Footer } = Layout;
+const { Header, Sider, Content } = Layout;
 
 const Dashboard = () => {
   const [token, setToken] = useState(JSON.parse(localStorage.getItem("auth")) || "");
@@ -15,7 +15,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const fetchLuckyNumber = async () => {
+  const fetchProjects = async () => {
     const axiosConfig = {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -23,25 +23,26 @@ const Dashboard = () => {
     };
 
     try {
-      const response = await axios.get("http://localhost:3000/api/v1/dashboard", axiosConfig);
-      setData({ msg: response.data.msg, luckyNumber: response.data.secret });
+      const response = await axios.get("http://localhost:3000/api/v1/projects", axiosConfig);
+      setProjects(response.data.projects);
     } catch (error) {
-      message.error(error.message);
+      toast.error(error.message);
     }
   };
+
+ 
 
   useEffect(() => {
     if (token === "") {
       navigate("/login");
-      message.warning("Please login first to access the dashboard");
+      toast.warn("Please login first to access the dashboard");
     } else {
-      fetchLuckyNumber();
-      setProjects(mockedProjects); // Set mocked data as projects
+      fetchProjects();
     }
   }, [token]);
 
   const columns = [
-    { title: 'Project Name', dataIndex: 'name', key: 'name' },
+    { title: 'Project Title', dataIndex: 'title', key: 'title' },
     { title: 'Description', dataIndex: 'description', key: 'description' },
   ];
 
@@ -53,67 +54,99 @@ const Dashboard = () => {
     setVisible(false);
   };
 
-  const handleCreate = (values) => {
+  const handleCreate = async (values) => {
     setLoading(true);
-    // Simulate project creation with mocked data
-    setTimeout(() => {
-      setProjects([...projects, { _id: Date.now().toString(), ...values }]);
-      message.success('Project created successfully');
+    const axiosConfig = {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    };
+
+    try {
+      await axios.post("http://localhost:3000/api/v1/projects/create", values, axiosConfig);
+      toast.success('Project created successfully');
+      fetchProjects(); // Refresh the project list
       setVisible(false);
+    } catch (error) {
+      toast.error(error.response.data.msg);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("auth");
+    setToken("");
+    navigate("/login");
+    toast.success("Logged out successfully");
   };
 
   return (
     <Layout className='layout'>
-      <Header>
+      <Header className="dashboard-header">
         <div className="logo" />
-        <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['1']}>
+        <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['1']} style={{ flex: 1 }}>
           <Menu.Item key="1">Dashboard</Menu.Item>
-          <Menu.Item key="2">
-            <Link to="/logout">Logout</Link>
-          </Menu.Item>
         </Menu>
+        <Button className="logout-button" onClick={handleLogout}>Logout</Button>
       </Header>
-      <Content style={{ padding: '0 50px' }}>
-        <div className="site-layout-content">
-          <h1>Dashboard</h1>
-          <p>Hi {data.msg}! {data.luckyNumber}</p>
-          <Table columns={columns} dataSource={projects} rowKey="_id" />
-          <Button className="add-button" type="primary" shape="circle" onClick={showModal}>
-            +
-          </Button>
-          <Modal
-            visible={visible}
-            title="Create a new project"
-            onCancel={handleCancel}
-            footer={null}
+      <Layout>
+        <Sider width={200} className="dashboard-sider">
+          <Menu
+            mode="inline"
+            defaultSelectedKeys={['1']}
+            style={{ height: '100%', borderRight: 0 }}
           >
-            <Form layout="vertical" onFinish={handleCreate}>
-              <Form.Item
-                name="name"
-                label="Project Name"
-                rules={[{ required: true, message: 'Please input the project name!' }]}
-              >
-                <Input />
-              </Form.Item>
-              <Form.Item
-                name="description"
-                label="Description"
-                rules={[{ required: true, message: 'Please input the project description!' }]}
-              >
-                <Input.TextArea />
-              </Form.Item>
-              <Form.Item>
-                <Button type="primary" htmlType="submit" loading={loading}>
-                  Create
-                </Button>
-              </Form.Item>
-            </Form>
-          </Modal>
-        </div>
-      </Content>
-      <Footer style={{ textAlign: 'center' }}>Ant Design ©2024 Created by Ant UED</Footer>
+            <Menu.Item key="1">Dashboard</Menu.Item>
+          </Menu>
+        </Sider>
+        <Layout style={{ padding: '0 24px 24px', minHeight: 'calc(100vh - 64px)' }}>
+          <Content
+            className="site-layout-background"
+            style={{
+              padding: 24,
+              margin: 0,
+              minHeight: '100%',
+            }}
+          >
+            <div className="content-header">
+              <h1>Dashboard</h1>
+              <Button className="add-button" type="primary" onClick={showModal}>
+                + Add Project
+              </Button>
+            </div>
+            <Table columns={columns} dataSource={projects} rowKey="_id" />
+            <Modal
+              visible={visible}
+              title="Create a new project"
+              onCancel={handleCancel}
+              footer={null}
+            >
+              <Form layout="vertical" onFinish={handleCreate}>
+                <Form.Item
+                  name="title"
+                  label="Project Title"
+                  rules={[{ required: true, message: 'Please input the project title!' }]}
+                >
+                  <Input />
+                </Form.Item>
+                <Form.Item
+                  name="description"
+                  label="Description"
+                  rules={[{ required: true, message: 'Please input the project description!' }]}
+                >
+                  <Input.TextArea />
+                </Form.Item>
+                <Form.Item>
+                  <Button type="primary" htmlType="submit" loading={loading}>
+                    Create
+                  </Button>
+                </Form.Item>
+              </Form>
+            </Modal>
+          </Content>
+        </Layout>
+      </Layout>
     </Layout>
   );
 };
