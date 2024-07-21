@@ -1,38 +1,41 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const ProjectSchema = new mongoose.Schema({
+const TaskSchema = new mongoose.Schema({
     title: {
         type: String,
-        required: [true, 'Please provide name'],
+        required: [true, 'Please provide title'],
         minlength: 3,
         maxlength: 50
     },
 
     description: {
         type: String,
-        required: [true, 'Please provide description'],
         minlength: 3,
         maxlength: 200
     },
-    
+
     estimatedTime: {
         type: Number,
         required: [true, 'Please provide estimated time']
     },
+
+    project: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Project'
+    },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+        ref: 'User'
     },
     createdAt: {
         type: Date,
         default: Date.now
     },
-    tasks: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Task"
-        }
-    ]
+
+    assignee:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }
 });
 
-module.exports = mongoose.model("Project", ProjectSchema);
+module.exports = mongoose.model('Task', TaskSchema);

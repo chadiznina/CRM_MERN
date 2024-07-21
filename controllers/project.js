@@ -1,17 +1,16 @@
 const Project = require('../models/Project');
 
 const createProject = async (req, res) => {
-    const { title } = req.body;
-    if (!title) {
+    const { title, estimatedTime, description } = req.body;
+    if (!title || !estimatedTime || !description) {
         return res.status(400).json({
-            msg: "Please provide title"
+            msg: "Fields cannot be empty"
         });
     }
 
     const findProject = await Project.findOne({
         title
     });
-    console.log(req.user);
 
     if (findProject) {
         return res.status(400).json({
@@ -24,6 +23,8 @@ const createProject = async (req, res) => {
     } else { 
         const project = new Project({
             title,
+            estimatedTime,
+            description,
             createdBy: req.user.id
         });
         await project.save();
