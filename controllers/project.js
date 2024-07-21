@@ -36,6 +36,9 @@ const createProject = async (req, res) => {
 
 const getProjects = async (req, res) => {
   let projects = await Project.find({});
+    if(req.user.role !== 'admin') {
+        projects = projects.filter(project => project.tasks.some(task => task.assignee == req.user.id));
+    }
   return res.status(200).json({ projects });
 };
 
@@ -48,7 +51,10 @@ const getProject = async (req, res) => {
     });
   }
 
-  const tasks = await Task.find({ projectId: req.params.id });
+  let tasks = await Task.find({ projectId: req.params.id });
+  if(req.user.role !== 'admin') {
+    tasks = tasks.filter(task => task.assignee == req.user.id);
+  }
   for (let i = 0; i < tasks.length; i++) {
     tasks[i] = tasks[i].toObject();
     tasks[i].assignee = await User.findById(tasks[i].assignee);
@@ -59,7 +65,6 @@ const getProject = async (req, res) => {
   }
 
   project = project.toObject();
-
   project.tasks = tasks;
   return res.status(200).json({ project });
 };
