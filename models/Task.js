@@ -19,7 +19,7 @@ const TaskSchema = new mongoose.Schema({
         required: [true, 'Please provide estimated time']
     },
 
-    project: {
+    projectId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Project'
     },
@@ -32,7 +32,7 @@ const TaskSchema = new mongoose.Schema({
         default: Date.now
     },
 
-    assignee:{
+    assignee: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }
