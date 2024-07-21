@@ -42,8 +42,9 @@ const getTask = async (req, res) => {
 };
 
 const updateTask = async (req, res) => {
+    task = await Task.findById(req.params.id);
   if (req.user.role !== "admin") {
-        if(req.body.description || req.body.title) { {
+        if(req.body.description !== task.description || req.body.title!== task.title ) { {
             return res.status(400).json({
                 msg: "You are not authorized to update task",
             });
