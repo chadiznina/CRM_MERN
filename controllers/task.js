@@ -36,18 +36,6 @@ const createTask = async (req, res) => {
   res.status(201).json({ task, msg: "Task created" });
 };
 
-const getTasks = async (req, res) => {
-  const project = await Project.findById(req.params.id);
-  if (!project) {
-    return res.status(400).json({
-      msg: "Project not found",
-    });
-  }
-
-  let tasks = await Task.find({ project: req.params.id });
-  return res.status(200).json({ tasks });
-};
-
 const getTask = async (req, res) => {
   let task = await Task.findById(req.params.id);
   return res.status(200).json({ task });
@@ -95,4 +83,4 @@ const deleteTask = async (req, res) => {
   return res.status(200).json({ msg: "Task deleted" });
 };
 
-module.exports = { createTask, getTasks, getTask, updateTask, deleteTask };
+module.exports = { createTask, getTask, updateTask, deleteTask };
