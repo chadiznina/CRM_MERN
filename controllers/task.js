@@ -44,7 +44,7 @@ const getTask = async (req, res) => {
 const updateTask = async (req, res) => {
     if ((req.user.role !== 'admin')) {
         return res.status(400).json({
-            msg: "You are not authorized to create task"
+            msg: "You are not authorized to update task"
         });
     }
 
