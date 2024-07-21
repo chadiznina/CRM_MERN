@@ -1,99 +1,98 @@
-const Task = require('../models/Task');
-const Project = require('../models/Project');
+const Task = require("../models/Task");
+const Project = require("../models/Project");
 
 const createTask = async (req, res) => {
-    const { title, description, projectId, estimatedTime, assignee } = req.body;
-    if (!title || !description || !projectId || !estimatedTime || !assignee) {
-        return res.status(400).json({
-            msg: "You need to provide all the fields"
-        });
-    }
-
-    if ((req.user.role !== 'admin')) {
-        return res.status(400).json({
-            msg: "You are not authorized to create task"
-        });
-    }
-
-    const findProject = await Project.findById(projectId);
-    if (!findProject) {
-        return res.status(400).json({
-            msg: "Project not found"
-        });
-    }
-
-    const task = new Task({
-        title,
-        description,
-        projectId,
-        estimatedTime,
-        assignee,
-        createdBy: req.user.id
+  const { title, description, projectId, estimatedTime, assignee } = req.body;
+  if (!title || !description || !projectId || !estimatedTime || !assignee) {
+    return res.status(400).json({
+      msg: "You need to provide all the fields",
     });
-    await task.save();
-    findProject.tasks.push(task);
-    await findProject.save();
-    res.status(201).json({ task, msg: "Task created" });
-}
+  }
+
+  if (req.user.role !== "admin") {
+    return res.status(400).json({
+      msg: "You are not authorized to create task",
+    });
+  }
+
+  const findProject = await Project.findById(projectId);
+  if (!findProject) {
+    return res.status(400).json({
+      msg: "Project not found",
+    });
+  }
+
+  const task = new Task({
+    title,
+    description,
+    projectId,
+    estimatedTime,
+    assignee,
+    createdBy: req.user.id,
+  });
+  await task.save();
+  findProject.tasks.push(task);
+  await findProject.save();
+  res.status(201).json({ task, msg: "Task created" });
+};
 
 const getTasks = async (req, res) => {
-    const project = await Project.findById(req.params.id);
-    if (!project) {
-        return res.status(400).json({
-            msg: "Project not found"
-        });
-    }
+  const project = await Project.findById(req.params.id);
+  if (!project) {
+    return res.status(400).json({
+      msg: "Project not found",
+    });
+  }
 
-    let tasks = await Task.find({ project: req.params.id });
-    return res.status(200).json({ tasks });
-}
+  let tasks = await Task.find({ project: req.params.id });
+  return res.status(200).json({ tasks });
+};
 
 const getTask = async (req, res) => {
-    let task = await Task.findById(req.params.id);
-    return res.status(200).json({ task });
-}
+  let task = await Task.findById(req.params.id);
+  return res.status(200).json({ task });
+};
 
 const updateTask = async (req, res) => {
-    if ((req.user.role !== 'admin')) {
-        return res.status(400).json({
-            msg: "You are not authorized to create task"
-        });
-    }
+  if (req.user.role !== "admin") {
+    return res.status(400).json({
+      msg: "You are not authorized to create task",
+    });
+  }
 
-    const project = await Project.findById(req.body.projectId);
-    if (!project) {
-        return res.status(400).json({
-            msg: "Project not found"
-        });
-    }
+  const project = await Project.findById(req.body.projectId);
+  if (!project) {
+    return res.status(400).json({
+      msg: "Project not found",
+    });
+  }
 
-    let task = await Task.findById(req.params.id);
-    if (!task) {
-        return res.status(400).json({
-            msg: "Task not found"
-        });
-    }
-    await Task.findByIdAndUpdate(req.params.id, req.body);
-    return res.status(200).json({ msg: "Task updated" });
-}
+  let task = await Task.findById(req.params.id);
+  if (!task) {
+    return res.status(400).json({
+      msg: "Task not found",
+    });
+  }
+  await Task.findByIdAndUpdate(req.params.id, req.body);
+  return res.status(200).json({ msg: "Task updated" });
+};
 
 const deleteTask = async (req, res) => {
+  const project = await Project.findById(req.body.projectId);
+  if (!project) {
+    return res.status(400).json({
+      msg: "Project not found",
+    });
+  }
 
-    const project = await Project.findById(req.body.projectId);
-    if (!project) {
-        return res.status(400).json({
-            msg: "Project not found"
-        });
-    }
-    
-    let task = await Task.findById(req.params.id);
-    if (!task) {
-        return res.status(400).json({
-            msg: "Task not found"
-        });
-    }
-    await Task.findByIdAndDelete(req.params.id);
-    return res.status(200).json({ msg: "Task deleted" });
-}
+  let task = await Task.findById(req.params.id);
+  if (!task) {
+    return res.status(400).json({
+      msg: "Task not found",
+    });
+  }
+  await Task.findByIdAndDelete(req.params.id);
+  return res.status(200).json({ msg: "Task deleted" });
+};
 
 module.exports = { createTask, getTasks, getTask, updateTask, deleteTask };
