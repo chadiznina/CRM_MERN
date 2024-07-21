@@ -5,7 +5,7 @@ const createTask = async (req, res) => {
     const { title, description, projectId, estimatedTime, assignee } = req.body;
     if (!title || !description || !projectId || !estimatedTime || !assignee) {
         return res.status(400).json({
-            msg: "Please provide title, description and project"
+            msg: "You need to provide all the fields"
         });
     }
 
@@ -32,6 +32,7 @@ const createTask = async (req, res) => {
     });
     await task.save();
     findProject.tasks.push(task);
+    await findProject.save();
     res.status(201).json({ task, msg: "Task created" });
 }
 
