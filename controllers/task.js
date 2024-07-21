@@ -32,6 +32,7 @@ const createTask = async (req, res) => {
     });
     await task.save();
     findProject.tasks.push(task);
+    await findProject.save();
     res.status(201).json({ task, msg: "Task created" });
 }
 

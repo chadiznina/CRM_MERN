@@ -1,4 +1,5 @@
 const Project = require('../models/Project');
+const Task = require('../models/Task');
 
 const createProject = async (req, res) => {
     const { title, estimatedTime, description } = req.body;
@@ -72,6 +73,10 @@ const deleteProject = async (req, res) => {
         });
     } else {
         await Project.findByIdAndDelete(req.params.id);
+        const tasks = await Task.find({ projectId: req.params.id });
+        for (let i = 0; i < tasks.length; i++) {
+            await Task.findByIdAndDelete(tasks[i]._id);
+        }
         return res.status(200).json({ msg: "Project deleted" });
     }
 }
