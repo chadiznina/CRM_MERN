@@ -48,6 +48,15 @@ const getProject = async (req, res) => {
   }
 
   const tasks = await Task.find({ projectId: req.params.id });
+  for (let i = 0; i < tasks.length; i++) {
+    tasks[i] = tasks[i].toObject();
+    tasks[i].assignee = await User.findById(tasks[i].assignee);
+
+    if (tasks[i].assignee) {
+      tasks[i].assignee = tasks[i].assignee.toObject();
+    }
+  }
+
   project = project.toObject();
 
   project.tasks = tasks;
@@ -88,10 +97,21 @@ const deleteProject = async (req, res) => {
     for (let i = 0; i < tasks.length; i++) {
       await Task.findByIdAndDelete(tasks[i]._id);
     }
-    return res.status(200).json({ msg: "Project deleted" });
+
+    if (!req.user.role === "admin") {
+      return res.status(400).json({
+        msg: "You are not authorized to delete project",
+      });
+    } else {
+      await Project.findByIdAndDelete(req.params.id);
+      const tasks = await Task.find({ projectId: req.params.id });
+      for (let i = 0; i < tasks.length; i++) {
+        await Task.findByIdAndDelete(tasks[i]._id);
+      }
+      return res.status(200).json({ msg: "Project deleted" });
+    }
   }
 };
-
 module.exports = {
   createProject,
   getProjects,
