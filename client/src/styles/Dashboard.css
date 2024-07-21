@@ -1,0 +1,118 @@
+/* Consolidated Dashboard.css */
+
+/* General Dashboard Styles */
+.dashboard-main {
+  font-size: 30px;
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 24px;
+  background: #fff;
+  min-height: 280px;
+}
+
+.dashboard-main p {
+  font-size: 20px;
+  padding: 0 20px;
+}
+
+/* Logout Button Styles */
+.logout-button {
+  background: black;
+  color: white;
+  border: 3px solid black;
+  transition: background 1s linear 0ms, color 500ms linear 0ms;
+  width: 500px;
+  padding: 16px;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 10px;
+  font-size: 20px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.logout-button:hover {
+  color: #333;
+  background-color: white;
+}
+
+/* Site Layout Styles */
+.site-layout-content {
+  background: #fff;
+  padding: 24px;
+  margin: 24px 0;
+  min-height: 360px;
+}
+
+/* Logo Styles */
+.logo {
+  height: 32px;
+  margin: 16px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Header Background */
+.site-layout-background {
+  background: #fff;
+}
+
+/* Dashboard Header Styles */
+.dashboard-header {
+  background: #fff;
+  padding: 0;
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* Dashboard Sidebar Styles */
+.dashboard-sider {
+  background: #001529;
+}
+
+.ant-layout-sider-collapsed .ant-menu-item {
+  text-align: center;
+}
+
+.ant-layout-sider-collapsed .ant-menu-item::after {
+  display: none;
+}
+
+/* Dashboard Content Styles */
+.dashboard-content {
+  margin: 24px 16px;
+  padding: 24px;
+  background: #fff;
+  min-height: 280px;
+}
+
+/* Dashboard Footer Styles */
+.dashboard-footer {
+  text-align: center;
+}
+
+/* User Info Styles */
+.user-info {
+  margin-right: 16px;
+  float: right;
+}
+
+/* Add Button Styles */
+.add-button {
+  position: fixed;
+  bottom: 50px;
+  right: 50px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  font-size: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
