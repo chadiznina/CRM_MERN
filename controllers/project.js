@@ -40,6 +40,19 @@ const getProjects = async (req, res) => {
 
 const getProject = async (req, res) => {
     let project = await Project.findById(req.params.id);
+
+    if(!project) {
+        return res.status(400).json({
+            msg: "Project not found"
+        });
+    }
+
+    const tasks = await Task.find({ projectId: req.params.id });
+    project = project.toObject();
+
+    project.tasks = tasks;
+
+    project.save();
     return res.status(200).json({ project });
 }
 
