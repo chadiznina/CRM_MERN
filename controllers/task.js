@@ -42,10 +42,13 @@ const getTask = async (req, res) => {
 };
 
 const updateTask = async (req, res) => {
+    // if user is not admin, should update only estimatedTime and assignee
   if (req.user.role !== "admin") {
-    return res.status(400).json({
-      msg: "You are not authorized to update task",
-    });
+    if(req.body.description || req.body.title) { {
+        return res.status(400).json({
+            msg: "You are not authorized to update task",
+        });
+    }
   }
 
   const project = await Project.findById(req.body.projectId);
