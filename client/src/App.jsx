@@ -1,7 +1,6 @@
-
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import { Dashboard, HomeLayout, Landing, Login, Logout, Register } from "./pages";
-import { ToastContainer, toast } from 'react-toastify';
+import { Dashboard, HomeLayout, Landing, Login, Logout, Register, ProjectDetails } from "./pages";
+import { ToastContainer } from 'react-toastify';
 
 const router = createBrowserRouter([
   {
@@ -27,20 +26,22 @@ const router = createBrowserRouter([
       {
         path: "logout",
         element: <Logout />,
+      },
+      {
+        path: "project/:id",
+        element: <ProjectDetails />,
       }
     ],
   },
 ]);
 
 function App() {
-
-
   return (
     <>
-        <RouterProvider router={router} />
-        <ToastContainer position='top-center' />
+      <RouterProvider router={router} />
+      <ToastContainer position='top-center' />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
