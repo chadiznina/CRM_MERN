@@ -36,6 +36,10 @@ const TaskSchema = new mongoose.Schema({
     endDate: {
         type: Date
     },
+
+    color: {
+        type: String,
+    }
 });
 
 module.exports = mongoose.model('Task', TaskSchema);
