@@ -2,8 +2,8 @@ const Task = require("../models/Task");
 const Project = require("../models/Project");
 
 const createTask = async (req, res) => {
-  const { title, description, projectId, estimatedTime, assignee } = req.body;
-  if (!title || !description || !projectId || !estimatedTime || !assignee) {
+  const { title, description, projectId, assignee } = req.body;
+  if (!title || !description || !projectId || !assignee) {
     return res.status(400).json({
       msg: "You need to provide all the fields",
     });
@@ -26,7 +26,6 @@ const createTask = async (req, res) => {
     title,
     description,
     projectId,
-    estimatedTime,
     assignee,
     createdBy: req.user.id,
   });
@@ -42,13 +41,6 @@ const getTask = async (req, res) => {
 };
 
 const updateTask = async (req, res) => {
-  const project = await Project.findById(req.body.projectId);
-    if (!project) {
-      return res.status(400).json({
-        msg: "Project not found",
-      });
-    }
-    
   let task = await Task.findById(req.params.id);
 
   if (!task) {
@@ -56,21 +48,21 @@ const updateTask = async (req, res) => {
       msg: "Task not found",
     });
   }
+  const {startDate, endDate} = req.body;
 
-  if (req.user.role !== "admin") {
-    const { description, title, estimatedTime } = req.body;
-    if (description !== task.description || title !== task.title) {
-      return res.status(400).json({
-        msg: "You are not authorized to update task",
-      });
-    } else {
-      await Task.findByIdAndUpdate(req.params.id, { estimatedTime });
-      return res.status(200).json({ msg: "Task updated" });
-    }
-  } else {
-    await Task.findByIdAndUpdate(req.params.id, req.body);
-    return res.status(200).json({ msg: "Task updated" });
+  if(startDate < endDate) {
+    return res.status(400).json({
+      msg: "Start date should be less than end date",
+    });
   }
+
+  task = await Task.findByIdAndUpdate(req.params.id, req.body);
+  return res.status(200).json({ task, msg: "Task updated" });
+};
+
+const getTasks = async (req, res) => {
+  const tasks = await Task.find();
+  return res.status(200).json({ tasks });
 };
 
 const deleteTask = async (req, res) => {
@@ -91,4 +83,4 @@ const deleteTask = async (req, res) => {
   return res.status(200).json({ msg: "Task deleted" });
 };
 
-module.exports = { createTask, getTask, updateTask, deleteTask };
+module.exports = { createTask, getTask ,getTasks,  updateTask, deleteTask };

@@ -13,12 +13,6 @@ const TaskSchema = new mongoose.Schema({
         minlength: 3,
         maxlength: 200
     },
-
-    estimatedTime: {
-        type: Number,
-        required: [true, 'Please provide estimated time']
-    },
-
     projectId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Project'
@@ -35,7 +29,13 @@ const TaskSchema = new mongoose.Schema({
     assignee: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    }
+    },
+    startDate: {
+        type: Date
+    },
+    endDate: {
+        type: Date
+    },
 });
 
 module.exports = mongoose.model('Task', TaskSchema);
