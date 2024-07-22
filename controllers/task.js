@@ -42,30 +42,34 @@ const getTask = async (req, res) => {
 };
 
 const updateTask = async (req, res) => {
-    task = await Task.findById(req.params.id);
-  if (req.user.role !== "admin") {
-        if(req.body.description !== task.description || req.body.title!== task.title ) { {
-            return res.status(400).json({
-                msg: "You are not authorized to update task",
-            });
-        }}
-    }
-
-  const project = await Project.findById(req.body.projectId);
-  if (!project) {
-    return res.status(400).json({
-      msg: "Project not found",
-    });
-  }
-
   let task = await Task.findById(req.params.id);
+
   if (!task) {
     return res.status(400).json({
       msg: "Task not found",
     });
   }
-  await Task.findByIdAndUpdate(req.params.id, req.body);
-  return res.status(200).json({ msg: "Task updated" });
+
+  if (req.user.role !== "admin") {
+    const { description, title, estimatedTime } = req.body;
+    if (description !== task.description || title !== task.title) {
+      return res.status(400).json({
+        msg: "You are not authorized to update task",
+      });
+    } else {
+      await Task.findByIdAndUpdate(req.params.id, { estimatedTime });
+      return res.status(200).json({ msg: "Task updated" });
+    }
+  } else {
+    const project = await Project.findById(req.body.projectId);
+    if (!project) {
+      return res.status(400).json({
+        msg: "Project not found",
+      });
+    }
+    await Task.findByIdAndUpdate(req.params.id, req.body);
+    return res.status(200).json({ msg: "Task updated" });
+  }
 };
 
 const deleteTask = async (req, res) => {
