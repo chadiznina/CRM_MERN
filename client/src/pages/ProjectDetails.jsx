@@ -165,7 +165,6 @@ const ProjectDetails = () => {
   const taskColumns = [
     { title: 'Task Title', dataIndex: 'title', key: 'title' },
     { title: 'Description', dataIndex: 'description', key: 'description' },
-    { title: 'Estimated Time', dataIndex: 'estimatedTime', key: 'estimatedTime' },
     {
       title: 'Assigned To',
       dataIndex: 'assignee',
@@ -330,13 +329,8 @@ const ProjectDetails = () => {
                 >
                   <Input.TextArea />
                 </Form.Item>
-                <Form.Item
-                  name="estimatedTime"
-                  label="Estimated Time"
-                  rules={[{ required: true, message: 'Please input the estimated time!' }]}
-                >
-                  <Input />
-                </Form.Item>
+              
+                
                 <Form.Item
                   name="assignee"
                   label="Assignee"

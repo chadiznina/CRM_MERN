@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DayPilot, DayPilotCalendar } from '@daypilot/daypilot-lite-react';
-import { Modal, Form, Select, Input, Button } from 'antd';
+import { Modal, Form, Select, Button } from 'antd';
 import axios from 'axios';
 import PropTypes from 'prop-types';
 
@@ -18,13 +18,18 @@ function Calendar({ projectId }) {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/api/v1/projects/${projectId}/tasks`);
+        const token = JSON.parse(localStorage.getItem("auth"));
+        const response = await axios.get(`http://localhost:3000/api/v1/projects/${projectId}/tasks`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const tasks = response.data.tasks;
         const events = tasks.map(task => ({
           id: task._id,
           text: task.title,
-          start: task.timesheet.start,
-          end: task.timesheet.end,
+          start: new DayPilot.Date(task.startDate),
+          end: new DayPilot.Date(task.endDate),
           barColor: task.color || "#6aa84f"
         }));
         setTasks(tasks);
@@ -45,28 +50,34 @@ function Calendar({ projectId }) {
 
   const handleModalOk = async () => {
     try {
+      const token = JSON.parse(localStorage.getItem("auth"));
       const values = await form.validateFields();
       const selectedTask = tasks.find(task => task._id === values.taskId);
+      const updatedTask = {
+        ...selectedTask,
+        startDate: selectedRange.start.toString(),
+        endDate: selectedRange.end.toString(),
+      };
+
+      await axios.put(`http://localhost:3000/api/v1/projects/${projectId}/tasks/task/${selectedTask._id}`, updatedTask, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
       const newEvent = {
-        start: selectedRange.start,
-        end: selectedRange.end,
-        id: DayPilot.guid(),
+        start: new DayPilot.Date(selectedRange.start),
+        end: new DayPilot.Date(selectedRange.end),
+        id: selectedTask._id,
         text: selectedTask.title,
         barColor: selectedTask.color || "#6aa84f",
       };
 
-      await axios.post(`http://localhost:3000/api/v1/projects/${projectId}/tasks/create`, {
-        ...newEvent,
-        projectId,
-        timesheet: { start: newEvent.start, end: newEvent.end },
-        hoursWorked: values.hoursWorked
-      });
-      
-      setEvents([...events, newEvent]);
+      setEvents(events.map(event => event.id === selectedTask._id ? newEvent : event));
       setModalVisible(false);
       form.resetFields();
     } catch (error) {
-      console.error("Error creating task:", error);
+      console.error("Error updating task:", error);
     }
   };
 
@@ -86,7 +97,7 @@ function Calendar({ projectId }) {
       />
       <Modal
         visible={modalVisible}
-        title="Log Work Hours"
+        title="Log Task Time"
         onCancel={handleModalCancel}
         footer={[
           <Button key="cancel" onClick={handleModalCancel}>
@@ -108,13 +119,6 @@ function Calendar({ projectId }) {
                 <Option key={task._id} value={task._id}>{task.title}</Option>
               ))}
             </Select>
-          </Form.Item>
-          <Form.Item
-            name="hoursWorked"
-            label="Hours Worked"
-            rules={[{ required: true, message: 'Please input hours worked!' }]}
-          >
-            <Input type="number" />
           </Form.Item>
         </Form>
       </Modal>
