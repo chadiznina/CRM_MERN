@@ -42,6 +42,13 @@ const getTask = async (req, res) => {
 };
 
 const updateTask = async (req, res) => {
+  const project = await Project.findById(req.body.projectId);
+    if (!project) {
+      return res.status(400).json({
+        msg: "Project not found",
+      });
+    }
+    
   let task = await Task.findById(req.params.id);
 
   if (!task) {
@@ -61,12 +68,6 @@ const updateTask = async (req, res) => {
       return res.status(200).json({ msg: "Task updated" });
     }
   } else {
-    const project = await Project.findById(req.body.projectId);
-    if (!project) {
-      return res.status(400).json({
-        msg: "Project not found",
-      });
-    }
     await Task.findByIdAndUpdate(req.params.id, req.body);
     return res.status(200).json({ msg: "Task updated" });
   }
