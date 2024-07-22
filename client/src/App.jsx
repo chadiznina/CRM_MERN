@@ -1,6 +1,7 @@
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { Dashboard, HomeLayout, Landing, Login, Logout, Register, ProjectDetails } from "./pages";
 import { ToastContainer } from 'react-toastify';
+import Calendar from "./pages/Calendar";
 
 const router = createBrowserRouter([
   {
@@ -30,6 +31,10 @@ const router = createBrowserRouter([
       {
         path: "project/:id",
         element: <ProjectDetails />,
+      },
+      {
+        path: "timesheet",
+        element: <Calendar />,
       }
     ],
   },

@@ -12,7 +12,7 @@ const { Option } = Select;
 const ProjectDetails = () => {
   const { id } = useParams();
   const [token, setToken] = useState(JSON.parse(localStorage.getItem("auth")) || "");
-  const [user, setUser] = useState(null);  // Define user state
+  const [user, setUser] = useState(null);
   const [project, setProject] = useState(null);
   const [users, setUsers] = useState([]);
   const [visible, setVisible] = useState(false);
@@ -107,7 +107,7 @@ const ProjectDetails = () => {
     try {
       await axios.post(`http://localhost:3000/api/v1/projects/${id}/tasks/create`, taskData, axiosConfig);
       toast.success('Task created successfully');
-      fetchProjectDetails(); // Refresh the project details to get the updated task list
+      fetchProjectDetails();
       setVisible(false);
     } catch (error) {
       toast.error(error.response.data.msg);
@@ -132,7 +132,7 @@ const ProjectDetails = () => {
     try {
       await axios.put(`http://localhost:3000/api/v1/projects/${id}/tasks/task/${selectedTask._id}`, taskData, axiosConfig);
       toast.success('Task updated successfully');
-      fetchProjectDetails(); // Refresh the project details to get the updated task list
+      fetchProjectDetails();
       setEditTaskVisible(false);
     } catch (error) {
       toast.error(error.response.data.msg);
@@ -148,7 +148,7 @@ const ProjectDetails = () => {
         'Content-Type': 'application/json'
       },
       data: {
-        title: selectedTask?.title, // assuming you want to send the title and projectId in the delete request body
+        title: selectedTask?.title,
         projectId: id
       }
     };
@@ -156,7 +156,7 @@ const ProjectDetails = () => {
     try {
       await axios.delete(`http://localhost:3000/api/v1/projects/${id}/tasks/task/${taskId}`, axiosConfig);
       toast.success('Task deleted successfully');
-      fetchProjectDetails(); // Refresh the project details to get the updated task list
+      fetchProjectDetails();
     } catch (error) {
       toast.error(error.message);
     }
@@ -306,6 +306,7 @@ const ProjectDetails = () => {
                   </Button>
                 )}
                 <Table columns={taskColumns} dataSource={project.tasks} rowKey="_id" style={{ marginTop: 20 }} />
+              
               </div>
             )}
             <Modal

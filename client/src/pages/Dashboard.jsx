@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import Calendar from './Calendar'; // Import the Calendar component
 import "../styles/Dashboard.css";
 
 const { Header, Sider, Content } = Layout;
@@ -46,6 +47,7 @@ const Dashboard = () => {
 
     try {
       const response = await axios.get("http://localhost:3000/api/v1/projects", axiosConfig);
+      console.log(response.data.projects);
       setProjects(response.data.projects);
     } catch (error) {
       toast.error(error.message);
@@ -200,7 +202,11 @@ const Dashboard = () => {
                 </Button>
               )}
             </div>
-            <Table columns={columns} dataSource={projects} rowKey="_id" />
+            {user?.role === 'admin' ? (
+              <Table columns={columns} dataSource={projects} rowKey="_id" />
+            ) : (
+              <Calendar projectId={projects.length > 0 ? projects[0]._id : null} />
+            )}
             <Modal
               visible={visible}
               title={selectedProject ? "Edit project" : "Create a new project"}
