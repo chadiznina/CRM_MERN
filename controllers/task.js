@@ -61,7 +61,8 @@ const updateTask = async (req, res) => {
 };
 
 const getTasks = async (req, res) => {
-  const tasks = await Task.find();
+  let tasks = await Task.find({});
+  tasks = tasks.filter((task) => task.assignee.equals(req.user.id));
   return res.status(200).json({ tasks });
 };
 
